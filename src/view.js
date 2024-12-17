@@ -164,9 +164,6 @@ export default (details, i18next, state) => {
       case 'posts':
         renderPosts(details, i18next, watchedState);
         break;
-      case 'ulStateOpened':
-        renderPosts(details, i18next, watchedState);
-        break;
       case 'feeds':
         renderFeeds(details, i18next, watchedState);
         renderFeedback(details, i18next, watchedState);
