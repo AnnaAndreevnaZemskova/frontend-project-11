@@ -6,6 +6,20 @@ export default (flow) => {
     const error = new Error('invalidRss');
     throw error;
   } else {
-    return doc;
+    const postsArr = Array.from(doc.querySelectorAll('item'));
+    const feed = {
+      text: doc.querySelector('channel > title').textContent,
+      description: doc.querySelector('channel > description').textContent,
+    };
+    const posts = postsArr.reverse().map((post) => {
+      const title = post.querySelector('title');
+      return {
+        text: title.textContent,
+        description: post.querySelector('description').textContent,
+        link: post.querySelector('link').textContent,
+        timeOfPost: post.querySelector('pubDate').textContent,
+      };
+    });
+    return [feed, posts];
   }
 };
