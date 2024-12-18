@@ -1,56 +1,52 @@
-import path from 'path';
-import autoprefixer from 'autoprefixer';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import { fileURLToPath } from 'url';
+// Generated using webpack-cli https://github.com/webpack/webpack-cli
 
-const filename = fileURLToPath(import.meta.url);
-const dirname = path.dirname(filename);
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-export const module = {
-  mode: 'development',
+const isProduction = process.env.NODE_ENV === 'production';
+
+const config = {
   entry: './src/index.js',
   output: {
-    filename: 'index.js',
-    path: path.resolve(dirname, 'dist'),
+    path: path.resolve(__dirname, 'dist'),
   },
   devServer: {
-    static: path.resolve(dirname, 'dist'),
-    port: 8080,
-    hot: true,
     open: true,
     host: 'localhost',
   },
   plugins: [
-    new HtmlWebpackPlugin({ template: './index.html' }),
+    new HtmlWebpackPlugin({
+      template: 'index.html',
+    }),
   ],
   module: {
     rules: [
       {
-        test: /\.(scss)$/,
-        use: [
-          {
-            loader: 'style-loader',
-          },
-          {
-            loader: 'css-loader',
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              postcssOptions: {
-                plugins: () => [
-                  autoprefixer,
-                ],
-              },
-            },
-          },
-          {
-            loader: 'sass-loader',
-          },
-        ],
+        test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
+        type: 'asset',
       },
     ],
   },
 };
 
-export default module;
+module.exports = () => {
+  if (isProduction) {
+    config.mode = 'production';
+  } else {
+    config.mode = 'development';
+  }
+  return config;
+};
+
+module.exports = {
+  entry: './src/js/main.js',
+  output: {
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist'),
+  },
+  devServer: {
+    static: path.resolve(__dirname, 'dist'),
+    port: 8080,
+    hot: true,
+  },
+};
