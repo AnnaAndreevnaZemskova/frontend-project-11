@@ -61,7 +61,6 @@ const renderFeeds = (elements, i18n, watchedState) => {
 };
 
 const renderPosts = (elements, i18n, watchedState) => {
-  console.log(current);
   elements.posts.innerHTML = '';
   const postsCard = document.createElement('div');
   postsCard.classList.add('card', 'border-0');
@@ -76,6 +75,7 @@ const renderPosts = (elements, i18n, watchedState) => {
   const ul = document.createElement('ul');
   ul.classList.add('list-group', 'border-0', 'rounded-0');
   postsCard.append(ul);
+
   watchedState.posts.forEach((post) => {
     const {
       id, text, link,
@@ -83,8 +83,10 @@ const renderPosts = (elements, i18n, watchedState) => {
     const li = document.createElement('li');
     const button = document.createElement('button');
     const a = document.createElement('a');
+
     li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
     ul.prepend(li);
+
     a.href = link;
     a.textContent = text;
     a.target = '_blank';
@@ -95,11 +97,10 @@ const renderPosts = (elements, i18n, watchedState) => {
     } else {
       a.classList.add('fw-bold');
     }
+
     button.type = 'button';
     button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
     button.textContent = i18n.t('button');
-    button.target = '_blank';
-    button.setAttribute('rel', 'noopener noreferrer');
     button.setAttribute('data-post-id', id);
     li.append(a, button);
   });
@@ -107,10 +108,10 @@ const renderPosts = (elements, i18n, watchedState) => {
   ul.addEventListener('click', (e) => {
     const button = e.target.closest('button');
     const a = e.target.closest('a');
+
     if (button) {
       watchedState.ulStateOpened.push(button.dataset.postId);
-      const [targetPost] = watchedState.posts.filter((post) => post.id === button.dataset.postId);
-      const targetA = document.querySelector(`a[data-post-id="${button.dataset.postId}"]`);
+      const [targetPost] = watchedState.posts.filter((post) => post.id === button.dataset.postId);const targetA = document.querySelector(`a[data-post-id="${button.dataset.postId}"]`);
       targetA.classList.remove('fw-bold');
       targetA.classList.add('fw-normal');
       const modal = new Modal(elements.modal);
@@ -135,7 +136,6 @@ const render = (elements, i18n) => {
   elements.fullArticle.textContent = i18n.t('modal.fullArticle');
   elements.buttonClose.textContent = i18n.t('modal.buttonClose');
 };
-render(details, i18next);
 
 export default (details, i18next, state) => {
   const renderValid = (elements, watchedState) => {
@@ -162,6 +162,9 @@ export default (details, i18next, state) => {
         renderValid(details, watchedState);
         break;
       case 'posts':
+        renderPosts(details, i18next, watchedState);
+        break;
+      case 'ulStateOpened':
         renderPosts(details, i18next, watchedState);
         break;
       case 'feeds':
