@@ -1,5 +1,5 @@
 import path from 'path';
-import autoprefixer from 'autoprefixer';
+// import autoprefixer from 'autoprefixer';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { fileURLToPath } from 'url';
 
@@ -8,15 +8,16 @@ const dirname = path.dirname(filename);
 
 export const module = {
   mode: 'development',
-  entry: 'src/index.js',
+  entry: './src/index.js',
   output: {
-    filename: 'index.js',
+  // filename: 'index.js',
     path: path.resolve(dirname, 'dist'),
+    clean: true,
   },
   devServer: {
-    static: path.resolve(dirname, 'dist'),
-    port: 8080,
-    hot: true,
+  //  static: path.resolve(dirname, 'dist'),
+  //  port: 8080,
+    // hot: true,
     open: true,
     host: 'localhost',
   },
@@ -26,22 +27,8 @@ export const module = {
   module: {
     rules: [
       {
-        test: /\.(scss)$/,
-        use: [
-          { loader: 'style-loader' },
-          { loader: 'css-loader' },
-          {
-            loader: 'postcss-loader',
-            options: {
-              postcssOptions: {
-                plugins: () => [
-                  autoprefixer,
-                ],
-              },
-            },
-          },
-          { loader: 'sass-loader' },
-        ],
+        test: /\.scss$/,
+        use: ['style-loader', 'css-loader', 'sass-loader', 'postcss-loader'],
       },
     ],
   },
