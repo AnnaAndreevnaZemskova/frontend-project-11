@@ -29,43 +29,75 @@ export default () => {
         website: '',
       },
       watchUrl: [],
+      feeds: [],
     },
   };
 
   const schema = yup.object({
     website: yup.string().url().notOneOf(state.form.watchUrl),
   });
+
   const watchedState = watch(elements, i18next, state);
+
+  const getNewPosts = (feeds) => {
+    feeds.map((feed) => {
+      axios.get(feed.url)
+        .then((response) => {
+          const document = parser(response.data.contents);
+          const postsArr = Array.from(document.querySelectorAll('item'));
+          const newPosts = postsArr.filter((post) => {
+            const timeOfPost = post.querySelector('pubDate').textContent;
+            if (timeOfPost > feed.lastUpdate) {
+              return post;
+            }
+            return post;
+          });
+          newPosts.map((post) => {
+            const newPost = {
+              id: uniqueId(),
+              text: post.querySelector('title').textContent,
+              description: post.querySelector('description').textContent,
+              link: post.querySelector('link').textContent,
+              feedId: feed.id,
+            };
+            watchedState.posts.push(newPost);
+            feed.lastUpdate = post.querySelector('pubDate').textContent;
+            return newPost;
+          });
+          watchedState.form.status = 'finished';
+        })
+        .catch((err) => {
+          watchedState.form.error = err.message;
+          watchedState.form.status = 'failed';
+        });
+      return feed;
+    });
+    setTimeout(() => getNewPosts(watchedState.feeds), 5000);
+  };
+
   const getFeedAndPosts = (url) => {
     axios.get(makeUrl(url))
       .then((response) => {
         const document = parser(response.data.contents);
-        const feedText = document.querySelector('channel > title').textContent;
-        const feedDescription = document.querySelector('channel > description').textContent;
-        const feedId = uniqueId();
-        const feed = {
-          id: feedId,
-          text: feedText,
-          description: feedDescription,
-        };
         const postsArr = Array.from(document.querySelectorAll('item'));
-        const posts = postsArr.map((post) => {
-          const postText = post.querySelector('title').textContent;
-          const postDescription = post.querySelector('description').textContent;
-          const postLink = post.querySelector('link').textContent;
-          const postId = uniqueId();
-          return {
-            id: postId,
-            text: postText,
-            description: postDescription,
-            link: postLink,
-            feedId,
-          };
-        });
+        const feed = {
+          id: uniqueId(),
+          text: document.querySelector('channel > title').textContent,
+          description: document.querySelector('channel > description').textContent,
+          url: makeUrl(url),
+          lastUpdate: postsArr[0].querySelector('pubDate').textContent,
+        };
+        const posts = postsArr.reverse().map((post) => ({
+          id: uniqueId(),
+          text: post.querySelector('title').textContent,
+          description: post.querySelector('description').textContent,
+          link: post.querySelector('link').textContent,
+          feedId: feed.id,
+        }));
         watchedState.form.status = 'finished';
-        watchedState.feed = feed;
+        watchedState.feeds.push(feed);
         watchedState.posts = posts;
-        console.log(watchedState);
+        getNewPosts(watchedState.feeds);
       })
       .catch((err) => {
         watchedState.form.error = err.message;
