@@ -2,8 +2,8 @@ import * as yup from 'yup';
 import i18next from 'i18next';
 import axios from 'axios';
 import { uniqueId } from 'lodash';
+import resources from './ru.js';
 import watch from './view.js';
-import resources from './languages/ru.js';
 import makeUrl from './helpers.js';
 import parser from './parser.js';
 
