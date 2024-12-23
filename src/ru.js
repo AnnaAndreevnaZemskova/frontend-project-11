@@ -9,6 +9,9 @@ export default {
           invalidRss: 'Ресурс не содержит валидный RSS',
         },
       },
+      feeds: 'Фиды',
+      posts: 'Посты',
+      button: 'Просмотр',
     },
   },
 };

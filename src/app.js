@@ -18,6 +18,8 @@ export default () => {
     form: document.querySelector('form'),
     input: document.querySelector('input'),
     feedback: document.querySelector('.feedback'),
+    feeds: document.querySelector('.feeds'),
+    posts: document.querySelector('.posts'),
   };
 
   const state = {
@@ -30,6 +32,8 @@ export default () => {
       },
       watchUrl: [],
       feeds: [],
+      posts: [],
+      ulStateOpend: [],
     },
   };
 
@@ -65,6 +69,7 @@ export default () => {
             return newPost;
           });
           watchedState.form.status = 'finished';
+          setTimeout(() => getNewPosts(watchedState.feeds), 5000);
         })
         .catch((err) => {
           watchedState.form.error = err.message;
@@ -72,7 +77,6 @@ export default () => {
         });
       return feed;
     });
-    setTimeout(() => getNewPosts(watchedState.feeds), 5000);
   };
 
   const getFeedAndPosts = (url) => {
