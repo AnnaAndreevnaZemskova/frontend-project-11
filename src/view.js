@@ -1,22 +1,15 @@
 import onChange from 'on-change';
+import { Modal } from 'bootstrap';
 
-const renderFeedback = (elements, i18n, state) => {
+const renderFeedback = (elements, i18n, watchedState) => {
   elements.feedback.classList.add('text-danger');
-  switch (state.form.error) {
-    case 'url':
-      elements.feedback.textContent = i18n.t('feedbacks.errors.invalid');
-      break;
-    case 'duplicate':
-      elements.feedback.textContent = i18n.t('feedbacks.errors.duplicate');
-      break;
-    case 'invalidRss':
-      elements.feedback.textContent = i18n.t('feedbacks.errors.invalidRss');
-      break;
-    default:
-      elements.feedback.textContent = i18n.t('feedbacks.valid');
-      elements.feedback.style.color = 'green';
-      elements.feedback.classList.remove('text-danger');
-      break;
+  const { error } = watchedState.form;
+  if (error) {
+    elements.feedback.textContent = i18n.t(`feedbacks.errors.${error}`);
+  } else {
+    elements.feedback.textContent = i18n.t('feedbacks.valid');
+    elements.feedback.style.color = 'green';
+    elements.feedback.classList.remove('text-danger');
   }
 };
 
@@ -27,12 +20,17 @@ const renderStatus = (elements, watchedState) => {
       elements.input.focus();
       elements.add.removeAttribute('disabled');
       break;
+    case 'sending':
+      elements.add.setAttribute('disabled', true);
+      break;
+    case 'failed':
+      elements.add.removeAttribute('disabled');
+      break;
     default:
       break;
   }
 };
-
-const renderFeeds = (elements, i18n, current) => {
+const renderFeeds = (elements, i18n, watchedState) => {
   elements.feeds.innerHTML = '';
   const feedsCard = document.createElement('div');
   feedsCard.classList.add('card', 'border-0');
@@ -47,7 +45,7 @@ const renderFeeds = (elements, i18n, current) => {
   const ul = document.createElement('ul');
   ul.classList.add('list-group', 'border-0', 'rounded-0');
   feedsCard.append(ul);
-  current.forEach((feed) => {
+  watchedState.feeds.forEach((feed) => {
     const li = document.createElement('li');
     li.classList.add('list-group-item', 'border-0', 'border-end-0');
     ul.append(li);
@@ -61,8 +59,7 @@ const renderFeeds = (elements, i18n, current) => {
   });
 };
 
-const renderPosts = (elements, i18n, current) => {
-  console.log(current);
+const renderPosts = (elements, i18n, watchedState) => {
   elements.posts.innerHTML = '';
   const postsCard = document.createElement('div');
   postsCard.classList.add('card', 'border-0');
@@ -77,14 +74,18 @@ const renderPosts = (elements, i18n, current) => {
   const ul = document.createElement('ul');
   ul.classList.add('list-group', 'border-0', 'rounded-0');
   postsCard.append(ul);
-  current.forEach(({
-    id, text, description, link,
-  }) => {
+
+  watchedState.posts.forEach((post) => {
+    const {
+      id, text, link,
+    } = post;
     const li = document.createElement('li');
     const button = document.createElement('button');
     const a = document.createElement('a');
+
     li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
     ul.prepend(li);
+
     a.href = link;
     a.textContent = text;
     a.target = '_blank';
@@ -95,32 +96,42 @@ const renderPosts = (elements, i18n, current) => {
     } else {
       a.classList.add('fw-bold');
     }
-    a.addEventListener('click', (e) => {
-      watchedState.ulStateOpend.push(e.target.dataset.postId);
-      a.classList.remove('fw-bold');
-      a.classList.add('fw-normal');
-    });
+
     button.type = 'button';
     button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
     button.textContent = i18n.t('button');
-    a.target = '_blank';
-    a.setAttribute('rel', 'noopener noreferrer');
     button.setAttribute('data-post-id', id);
-    a.addEventListener('click', (e) => {
-      watchedState.ulStateOpend.push(e.target.dataset.postId);
+    li.append(a, button);
+  });
+
+  ul.addEventListener('click', (e) => {
+    const button = e.target.closest('button');
+    const a = e.target.closest('a');
+
+    if (button) {
+      watchedState.ulStateOpened.push(button.dataset.postId);
+      const [targetPost] = watchedState.posts.filter((post) => post.id === button.dataset.postId);
+      const modal = new Modal(elements.modal);
+      elements.modalTitle.textContent = targetPost.text;
+      elements.modalBody.textContent = targetPost.description;
+      elements.modalArticle.href = targetPost.link;
+      modal.show();
+    } else if (a) {
+      watchedState.ulStateOpened.push(a.dataset.postId);
       a.classList.remove('fw-bold');
       a.classList.add('fw-normal');
-      const modal = new Modal(document.querySelector('#modal'));
-      const title = document.querySelector('.modal-title');
-      title.textContent = text;
-      const body = document.querySelector('.modal-body');
-      body.textContent = description;
-      const fullArticle = document.querySelector('.full-article');
-      fullArticle.href = link;
-      modal.show();
-    });
+    }
   });
-  li.append(a, button);
+};
+
+const render = (elements, i18n) => {
+  elements.title.textContent = i18n.t('title');
+  elements.subtitle.textContent = i18n.t('subtitle');
+  elements.label.textContent = i18n.t('label');
+  elements.example.textContent = i18n.t('example');
+  elements.add.textContent = i18n.t('add');
+  elements.fullArticle.textContent = i18n.t('modal.fullArticle');
+  elements.buttonClose.textContent = i18n.t('modal.buttonClose');
 };
 
 export default (details, i18next, state) => {
@@ -135,6 +146,9 @@ export default (details, i18next, state) => {
   const watchedState = onChange(state, (path) => {
     console.log(path);
     switch (path) {
+      case 'lng':
+        render(details, i18next);
+        break;
       case 'form.status':
         renderStatus(details, watchedState);
         break;
@@ -147,6 +161,9 @@ export default (details, i18next, state) => {
       case 'posts':
         renderPosts(details, i18next, watchedState);
         break;
+      case 'ulStateOpened':
+        renderPosts(details, i18next, watchedState);
+        break;
       case 'feeds':
         renderFeeds(details, i18next, watchedState);
         renderFeedback(details, i18next, watchedState);
@@ -154,6 +171,6 @@ export default (details, i18next, state) => {
       default:
         break;
     }
-    return watchedState;
   });
+  return watchedState;
 };
