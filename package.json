@@ -29,9 +29,11 @@
   },
   "dependencies": {
     "autoprefixer": "^10.4.20",
+    "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "globals": "^15.14.0",
     "i18next": "^24.2.0",
+    "lodash": "^4.17.21",
     "on-change": "^5.0.1",
     "webpack-dev-server": "^5.2.0",
     "yup": "^1.6.1"

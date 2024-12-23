@@ -6,6 +6,7 @@ export default {
         errors: {
           invalid: 'Ссылка должна быть валидным URL',
           duplicate: 'RSS уже существует',
+          invalidRss: 'Ресурс не содержит валидный RSS',
         },
       },
     },
