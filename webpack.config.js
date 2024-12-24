@@ -29,21 +29,21 @@ export const module = {
         test: /\.css$/,
         use: [
           {
-            loader: 'style-loader'
+            loader: 'style-loader',
           },
           {
             loader: 'css-loader',
-          }, 
+          },
           {
             loader: 'postcss-loader',
-          options: {
-            postcssOptions: {
-              plugins: () => [
-                autoprefixer,
-              ],
-            }
-          }
-        }
+            options: {
+              postcssOptions: {
+                plugins: () => [
+                  autoprefixer,
+                ],
+              },
+            },
+          },
         ],
       },
     ],
