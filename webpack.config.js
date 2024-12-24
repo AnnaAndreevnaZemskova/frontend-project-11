@@ -1,4 +1,5 @@
 import path from 'path';
+import autoprefixer from 'autoprefixer';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { fileURLToPath } from 'url';
 
@@ -26,7 +27,24 @@ export const module = {
     rules: [
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader', 'postcss-loader'],
+        use: [
+          {
+            loader: 'style-loader'
+          },
+          {
+            loader: 'css-loader',
+          }, 
+          {
+            loader: 'postcss-loader',
+          options: {
+            postcssOptions: {
+              plugins: () => [
+                autoprefixer,
+              ],
+            }
+          }
+        }
+        ],
       },
     ],
   },
