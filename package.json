@@ -5,8 +5,7 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "npx webpack serve",
-    "build": "webpack --mode production",
+    "build": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Anna Zemskova",
