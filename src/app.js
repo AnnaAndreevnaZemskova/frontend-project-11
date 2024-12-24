@@ -83,8 +83,9 @@ export default () => {
             feed.lastUpdate = posts[posts.length - 1].timeOfPost;
             feed.id = uniqueId();
             posts.forEach((post) => {
-              post.id = uniqueId();
-              post.feedId = feed.id;
+              const jj = post;
+              jj.id = uniqueId();
+              jj.feedId = feed.id;
             });
             watchedState.form.status = 'finished';
             watchedState.feeds.push(feed);
