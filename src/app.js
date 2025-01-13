@@ -9,47 +9,38 @@ import watch from './view.js';
 import makeUrl from './helpers.js';
 import parser from './parser.js';
 
+const elements = {
+  title: document.querySelector('h1'),
+  subtitle: document.querySelector('.lead'),
+  label: document.querySelector('[for="url-input"]'),
+  add: document.querySelector('[type="submit"]'),
+  example: document.querySelector('.example'),
+  fullArticle: document.querySelector('.full-article'),
+  buttonClose: document.querySelector('.btn-secondary'),
+  form: document.querySelector('form'),
+  input: document.querySelector('input'),
+  feedback: document.querySelector('.feedback'),
+  feeds: document.querySelector('.feeds'),
+  posts: document.querySelector('.posts'),
+  modal: document.querySelector('#modal'),
+  modalTitle: document.querySelector('.modal-title'),
+  modalBody: document.querySelector('.modal-body'),
+  modalArticle: document.querySelector('.full-article'),
+};
+
+const state = {
+  form: {
+    status: 'filling',
+    valid: true,
+    error: null,
+    watchUrl: [],
+  },
+  feeds: [],
+  posts: [],
+  ulStateOpened: [],
+};
+
 export default () => {
-  const elements = {
-    title: document.querySelector('h1'),
-    subtitle: document.querySelector('.lead'),
-    label: document.querySelector('[for="url-input"]'),
-    add: document.querySelector('[type="submit"]'),
-    example: document.querySelector('.example'),
-    fullArticle: document.querySelector('.full-article'),
-    buttonClose: document.querySelector('.btn-secondary'),
-    form: document.querySelector('form'),
-    input: document.querySelector('input'),
-    feedback: document.querySelector('.feedback'),
-    feeds: document.querySelector('.feeds'),
-    posts: document.querySelector('.posts'),
-    modal: document.querySelector('#modal'),
-    modalTitle: document.querySelector('.modal-title'),
-    modalBody: document.querySelector('.modal-body'),
-    modalArticle: document.querySelector('.full-article'),
-  };
-
-  const state = {
-    form: {
-      status: 'filling',
-      valid: true,
-      error: null,
-      watchUrl: [],
-    },
-    feeds: [],
-    posts: [],
-    ulStateOpened: [],
-  };
-
-  yup.setLocale({
-    string: {
-      url: () => ({ key: 'invalid' }),
-    },
-    mixed: {
-      notOneOf: () => ({ key: 'notOneOf' }),
-    },
-  });
-
   const defaultLanguage = 'ru';
   i18next.init({
     lng: defaultLanguage,
@@ -61,28 +52,28 @@ export default () => {
       watchedState.lng = 'ru';
 
       const getNewPosts = (feeds) => {
-        const promises = feeds.forEach((feed) => axios.get(feed.url))
-          .then((response) => {
-            const [, posts] = parser(response.data.contents);
-            const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
-            const newPosts = posts.filter(filterPost);
+        feeds.forEach((feed) => {
+          axios.get(feed.url)
+            .then((response) => {
+              const [, posts] = parser(response.data.contents);
+              const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
+              const newPosts = posts.filter(filterPost);
 
-            newPosts.map((post) => {
-              post.id = uniqueId();
-              post.feedId = feed.id;
-              watchedState.posts.push(post);
-              feed.lastUpdate = post.timeOfPost;
-              return post;
+              newPosts.map((post) => {
+                post.id = uniqueId();
+                post.feedId = feed.id;
+                watchedState.posts.push(post);
+                feed.lastUpdate = post.timeOfPost;
+                return post;
+              });
+              watchedState.form.status = 'finished';
+              setTimeout(() => getNewPosts(watchedState.feeds), 5000);
+            })
+            .catch((err) => {
+              watchedState.form.status = 'failed';
+              watchedState.form.valid = false;
+              watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
             });
-            watchedState.form.status = 'finished';
-          })
-          .catch((err) => {
-            watchedState.form.status = 'failed';
-            watchedState.form.valid = false;
-            watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
-          });
-        Promise.all(promises).finally(() => {
-          setTimeout(() => getNewPosts(), 5000);
         });
       };
 
@@ -114,6 +105,14 @@ export default () => {
         watchedState.form.status = 'sending';
         const formData = new FormData(elements.form);
         const url = formData.get('url');
+        yup.setLocale({
+          string: {
+            url: () => ({ key: 'invalid' }),
+          },
+          mixed: {
+            notOneOf: () => ({ key: 'notOneOf' }),
+          },
+        });
         const schema = yup.object({
           website: yup.string().url().notOneOf(watchedState.form.watchUrl),
         });
