@@ -82,7 +82,7 @@ export default () => {
             watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
           });
         Promise.all(promises).finally(() => {
-          setTimeout(() => getNewPosts(watchedState.feeds), 5000);
+          setTimeout(() => getNewPosts(), 5000);
         });
       };
 
