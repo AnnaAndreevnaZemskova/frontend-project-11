@@ -41,6 +41,15 @@ export default () => {
     ulStateOpened: [],
   };
 
+  yup.setLocale({
+    string: {
+      url: () => ({ key: 'invalid' }),
+    },
+    mixed: {
+      notOneOf: () => ({ key: 'notOneOf' }),
+    },
+  });
+
   const defaultLanguage = 'ru';
   i18next.init({
     lng: defaultLanguage,
@@ -105,14 +114,6 @@ export default () => {
         watchedState.form.status = 'sending';
         const formData = new FormData(elements.form);
         const url = formData.get('url');
-        yup.setLocale({
-          string: {
-            url: () => ({ key: 'invalid' }),
-          },
-          mixed: {
-            notOneOf: () => ({ key: 'notOneOf' }),
-          },
-        });
         const schema = yup.object({
           website: yup.string().url().notOneOf(watchedState.form.watchUrl),
         });
