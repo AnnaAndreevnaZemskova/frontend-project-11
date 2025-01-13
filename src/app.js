@@ -55,11 +55,11 @@ export default () => {
     lng: defaultLanguage,
     debug: false,
     resources,
-  });
-  // .then(() => {
-  const watchedState = watch(elements, i18next, state);
-  //  watchedState.lng = 'ru';
-  // })
+  })
+    .then(() => {
+      const watchedState = watch(elements, i18next, state);
+      watchedState.lng = 'ru';
+    });
   const getNewPosts = (feeds) => {
     const promises = feeds.forEach((feed) => axios.get(feed.url))
       .then((response) => {
