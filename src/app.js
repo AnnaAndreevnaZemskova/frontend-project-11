@@ -9,38 +9,38 @@ import watch from './view.js';
 import makeUrl from './helpers.js';
 import parser from './parser.js';
 
-const elements = {
-  title: document.querySelector('h1'),
-  subtitle: document.querySelector('.lead'),
-  label: document.querySelector('[for="url-input"]'),
-  add: document.querySelector('[type="submit"]'),
-  example: document.querySelector('.example'),
-  fullArticle: document.querySelector('.full-article'),
-  buttonClose: document.querySelector('.btn-secondary'),
-  form: document.querySelector('form'),
-  input: document.querySelector('input'),
-  feedback: document.querySelector('.feedback'),
-  feeds: document.querySelector('.feeds'),
-  posts: document.querySelector('.posts'),
-  modal: document.querySelector('#modal'),
-  modalTitle: document.querySelector('.modal-title'),
-  modalBody: document.querySelector('.modal-body'),
-  modalArticle: document.querySelector('.full-article'),
-};
-
-const state = {
-  form: {
-    status: 'filling',
-    valid: true,
-    error: null,
-    watchUrl: [],
-  },
-  feeds: [],
-  posts: [],
-  ulStateOpened: [],
-};
-
 export default () => {
+  const elements = {
+    title: document.querySelector('h1'),
+    subtitle: document.querySelector('.lead'),
+    label: document.querySelector('[for="url-input"]'),
+    add: document.querySelector('[type="submit"]'),
+    example: document.querySelector('.example'),
+    fullArticle: document.querySelector('.full-article'),
+    buttonClose: document.querySelector('.btn-secondary'),
+    form: document.querySelector('form'),
+    input: document.querySelector('input'),
+    feedback: document.querySelector('.feedback'),
+    feeds: document.querySelector('.feeds'),
+    posts: document.querySelector('.posts'),
+    modal: document.querySelector('#modal'),
+    modalTitle: document.querySelector('.modal-title'),
+    modalBody: document.querySelector('.modal-body'),
+    modalArticle: document.querySelector('.full-article'),
+  };
+
+  const state = {
+    form: {
+      status: 'filling',
+      valid: true,
+      error: null,
+      watchUrl: [],
+    },
+    feeds: [],
+    posts: [],
+    ulStateOpened: [],
+  };
+
   const defaultLanguage = 'ru';
   i18next.init({
     lng: defaultLanguage,
