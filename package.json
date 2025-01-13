@@ -1,7 +1,7 @@
 {
   "name": "@hexlet/code",
   "version": "1.0.0",
-  "description": "[![Actions Status](https://github.com/AnnaAndreevnaZemskova/frontend-project-11/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/AnnaAndreevnaZemskova/frontend-project-11/actions)",
+  "description": "Rss Reader is a service for aggregating RSS feeds",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
