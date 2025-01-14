@@ -63,8 +63,9 @@ export default () => {
       watchedState.lng = 'ru';
 
       const getNewPosts = (feeds) => {
-        const promises = feeds.map((feed) => axios.get(feed.url))
-          .then((response) => {
+        const promises = feeds.forEach((feed) => {
+          const feedURL = addProxy(feed.url);
+          return axios.get(feedURL).then((response) => {
             const [, posts] = parser(response.data.contents);
             const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
             const newPosts = posts.filter(filterPost);
@@ -77,61 +78,63 @@ export default () => {
               return post;
             });
             watchedState.form.status = 'finished';
-            Promise.all(promises).finally(() => {
-              setTimeout(() => getNewPosts(watchedState.feeds), timeout);
-            });
-          })
-          .catch((err) => {
-            watchedState.form.status = 'failed';
-            watchedState.form.valid = false;
-            watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
           });
-      };
-
-      const getFeedAndPosts = (url) => {
-        axios.get(makeUrl(url))
-          .then((response) => {
-            const [feed, posts] = parser(response.data.contents);
-            feed.url = makeUrl(url);
-            feed.lastUpdate = posts[posts.length - 1].timeOfPost;
-            feed.id = uniqueId();
-            posts.forEach((post) => {
-              post.id = uniqueId();
-              post.feedId = feed.id;
-            });
-            watchedState.form.status = 'finished';
-            watchedState.feeds.push(feed);
-            watchedState.posts = posts;
-            getNewPosts(watchedState.feeds);
-          })
-          .catch((err) => {
-            watchedState.form.error = (err.isAxiosError) ? 'networkError' : err.message;
-            watchedState.form.valid = false;
-            watchedState.form.status = 'failed';
-          });
-      };
-
-      elements.form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        watchedState.form.status = 'sending';
-        const formData = new FormData(elements.form);
-        const url = formData.get('url');
-        const schema = yup.object({
-          website: yup.string().url().notOneOf(watchedState.form.watchUrl),
         });
-        schema.validate({ website: url })
-          .then(() => {
-            watchedState.form.valid = true;
-            watchedState.form.error = null;
-            getFeedAndPosts(url);
-            watchedState.form.watchUrl.push(url);
-          })
-          .catch((err) => {
-            watchedState.form.error = err.message.key;
-            watchedState.form.valid = false;
-            watchedState.form.status = 'failed';
+          // .catch((err) => {
+          //   watchedState.form.status = 'failed';
+          //   watchedState.form.valid = false;
+          //   watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
+          // });
+        Promise.all(promises).finally(() => {
+          setTimeout(() => getNewPosts(watchedState.feeds), timeout);
+        });
+
+        const getFeedAndPosts = (url) => {
+          axios.get(makeUrl(url))
+            .then((response) => {
+              const [feed, posts] = parser(response.data.contents);
+              feed.url = makeUrl(url);
+              feed.lastUpdate = posts[posts.length - 1].timeOfPost;
+              feed.id = uniqueId();
+              posts.forEach((post) => {
+                post.id = uniqueId();
+                post.feedId = feed.id;
+              });
+              watchedState.form.status = 'finished';
+              watchedState.feeds.push(feed);
+              watchedState.posts = posts;
+              getNewPosts(watchedState.feeds);
+            })
+            .catch((err) => {
+              watchedState.form.error = (err.isAxiosError) ? 'networkError' : err.message;
+              watchedState.form.valid = false;
+              watchedState.form.status = 'failed';
+            });
+        };
+
+        elements.form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          watchedState.form.status = 'sending';
+          const formData = new FormData(elements.form);
+          const url = formData.get('url');
+          const schema = yup.object({
+            website: yup.string().url().notOneOf(watchedState.form.watchUrl),
           });
-        watch(elements, i18next, watchedState);
-      });
+          schema.validate({ website: url })
+            .then(() => {
+              watchedState.form.valid = true;
+              watchedState.form.error = null;
+              getFeedAndPosts(url);
+              watchedState.form.watchUrl.push(url);
+            })
+            .catch((err) => {
+              watchedState.form.error = err.message.key;
+              watchedState.form.valid = false;
+              watchedState.form.status = 'failed';
+            });
+        // watch(elements, i18next, watchedState);
+        });
+      };
+      getNewPosts(watchedState);
     });
 };
