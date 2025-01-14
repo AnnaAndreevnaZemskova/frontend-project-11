@@ -80,9 +80,9 @@ export default () => {
             watchedState.form.valid = false;
             watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
           });
-        watchedState.form.status = 'finished';
+        // watchedState.form.status = 'finished';
         Promise.all(promises).finally(() => {
-          setTimeout(() => getNewPosts(watchedState.feeds), 5000);
+          setTimeout(() => getNewPosts(feeds), 5000);
         });
       };
 
