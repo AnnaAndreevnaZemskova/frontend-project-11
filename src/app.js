@@ -41,7 +41,7 @@ export default () => {
     ulStateOpened: [],
   };
 
-  const timeout = 5000;
+  const timeout = 2500;
 
   yup.setLocale({
     string: {
