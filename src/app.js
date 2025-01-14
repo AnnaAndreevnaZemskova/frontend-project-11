@@ -41,6 +41,8 @@ export default () => {
     ulStateOpened: [],
   };
 
+  const timeout = 5000;
+
   yup.setLocale({
     string: {
       url: () => ({ key: 'invalid' }),
@@ -80,9 +82,9 @@ export default () => {
             watchedState.form.valid = false;
             watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
           });
-        // watchedState.form.status = 'finished';
+        watchedState.form.status = 'finished';
         Promise.all(promises).finally(() => {
-          setTimeout(() => getNewPosts(feeds), 5000);
+          setTimeout(() => getNewPosts(watchedState.feeds), timeout);
         });
       };
 
