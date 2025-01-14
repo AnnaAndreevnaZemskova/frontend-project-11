@@ -74,16 +74,16 @@ export default () => {
               feed.lastUpdate = post.timeOfPost;
               return post;
             });
-            watchedState.form.status = 'finished';
-            Promise.all(promises).finally(() => {
-              setTimeout(() => getNewPosts(watchedState.feeds), 5000);
-            });
           })
           .catch((err) => {
             watchedState.form.status = 'failed';
             watchedState.form.valid = false;
             watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
           });
+        watchedState.form.status = 'finished';
+        Promise.all(promises).finally(() => {
+          setTimeout(() => getNewPosts(watchedState.feeds), 5000);
+        });
       };
 
       const getFeedAndPosts = (url) => {
