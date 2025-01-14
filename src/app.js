@@ -61,29 +61,29 @@ export default () => {
       watchedState.lng = 'ru';
 
       const getNewPosts = (feeds) => {
-        feeds.forEach((feed) => {
-          axios.get(feed.url)
-            .then((response) => {
-              const [, posts] = parser(response.data.contents);
-              const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
-              const newPosts = posts.filter(filterPost);
+        const promises = feeds.forEach((feed) => axios.get(feed.url))
+          .then((response) => {
+            const [, posts] = parser(response.data.contents);
+            const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
+            const newPosts = posts.filter(filterPost);
 
-              newPosts.map((post) => {
-                post.id = uniqueId();
-                post.feedId = feed.id;
-                watchedState.posts.push(post);
-                feed.lastUpdate = post.timeOfPost;
-                return post;
-              });
-              watchedState.form.status = 'finished';
-              setTimeout(() => getNewPosts(watchedState.feeds), 5000);
-            })
-            .catch((err) => {
-              watchedState.form.status = 'failed';
-              watchedState.form.valid = false;
-              watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
+            newPosts.map((post) => {
+              post.id = uniqueId();
+              post.feedId = feed.id;
+              watchedState.posts.push(post);
+              feed.lastUpdate = post.timeOfPost;
+              return post;
             });
-        });
+            watchedState.form.status = 'finished';
+            Promise.all(promises).finally(() => {
+              setTimeout(() => getNewPosts(watchedState.feeds), 5000);
+            });
+          })
+          .catch((err) => {
+            watchedState.form.status = 'failed';
+            watchedState.form.valid = false;
+            watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
+          });
       };
 
       const getFeedAndPosts = (url) => {
