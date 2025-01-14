@@ -63,7 +63,7 @@ export default () => {
       watchedState.lng = 'ru';
 
       const getNewPosts = (feeds) => {
-        const promises = feeds.forEach((feed) => axios.get(feed.url))
+        const promises = feeds.map((feed) => axios.get(feed.url))
           .then((response) => {
             const [, posts] = parser(response.data.contents);
             const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
