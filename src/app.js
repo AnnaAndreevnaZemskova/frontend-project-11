@@ -63,8 +63,8 @@ export default () => {
       watchedState.lng = 'ru';
 
       const getNewPosts = (feeds) => {
-        const promises = feeds.forEach((feed) => {
-          const feedURL = addProxy(feed.url);
+        const promises = feeds.map((feed) => {
+          const feedURL = makeUrl(feed.url);
           return axios.get(feedURL).then((response) => {
             const [, posts] = parser(response.data.contents);
             const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
@@ -77,7 +77,7 @@ export default () => {
               feed.lastUpdate = post.timeOfPost;
               return post;
             });
-            watchedState.form.status = 'finished';
+          //  watchedState.form.status = 'finished';
           });
         });
           // .catch((err) => {
