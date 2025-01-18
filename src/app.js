@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 import * as yup from 'yup';
 import i18next from 'i18next';
 import axios from 'axios';
@@ -41,7 +39,39 @@ export default () => {
     ulStateOpened: [],
   };
 
-  const timeout = 5000;
+  const i18n = i18next.createInstance();
+  const defaultLanguage = 'ru';
+  i18n.init({
+    lng: defaultLanguage,
+    debug: false,
+    resources,
+  });
+
+  const watchedState = watch(elements, i18n, state);
+  watchedState.lng = 'ru';
+
+  const getNewPosts = () => {
+    const titlesOfPosts = watchedState.contents.posts.map(({ title }) => title);
+    const arrayOfPromises = watchedState.loadedFeeds.map(([url, feedId]) => axios.get(makeUrl(url))
+      .then((response) => {
+        const { posts } = parser(response.data);
+        const newPosts = posts.filter((post) => !titlesOfPosts.includes(post.title)).map((item) => {
+          post.id = uniqueId();
+          post.feedId = feed.id;
+          return { ...item, feedId };
+        });
+        if (watchedState.loadedFeeds.length > 0) {
+          watchedState.contents.posts = [...newPosts, ...watchedState.contents.posts];
+        }
+      }).catch((error) => {
+        console.log('error: ', error);
+      }));
+    Promise.all(arrayOfPromises).finally(() => {
+      setTimeout(() => getNewPosts(), 5000);
+    });
+  };
+
+  getNewPosts();
 
   yup.setLocale({
     string: {
@@ -52,89 +82,43 @@ export default () => {
     },
   });
 
-  const defaultLanguage = 'ru';
-  i18next.init({
-    lng: defaultLanguage,
-    debug: false,
-    resources,
-  })
-    .then(() => {
-      const watchedState = watch(elements, i18next, state);
-      watchedState.lng = 'ru';
-
-      const getNewPosts = (feeds) => {
-        const promises = feeds.map((feed) => {
-          const feedURL = makeUrl(feed.url);
-          return axios.get(feedURL).then((response) => {
-            const [, posts] = parser(response.data.contents);
-            const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
-            const newPosts = posts.filter(filterPost);
-
-            newPosts.map((post) => {
-              post.id = uniqueId();
-              post.feedId = feed.id;
-              watchedState.posts.push(post);
-              feed.lastUpdate = post.timeOfPost;
-              return post;
-            });
-          //  watchedState.form.status = 'finished';
-          });
-        });
-          // .catch((err) => {
-          //   watchedState.form.status = 'failed';
-          //   watchedState.form.valid = false;
-          //   watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
-          // });
-        Promise.all(promises).finally(() => {
-          setTimeout(() => getNewPosts(watchedState.feeds), timeout);
-        });
-
-        const getFeedAndPosts = (url) => {
-          axios.get(makeUrl(url))
-            .then((response) => {
-              const [feed, posts] = parser(response.data.contents);
-              feed.url = makeUrl(url);
-              feed.lastUpdate = posts[posts.length - 1].timeOfPost;
-              feed.id = uniqueId();
-              posts.forEach((post) => {
-                post.id = uniqueId();
-                post.feedId = feed.id;
-              });
-              watchedState.form.status = 'finished';
-              watchedState.feeds.push(feed);
-              watchedState.posts = posts;
-              getNewPosts(watchedState.feeds);
-            })
-            .catch((err) => {
-              watchedState.form.error = (err.isAxiosError) ? 'networkError' : err.message;
-              watchedState.form.valid = false;
-              watchedState.form.status = 'failed';
-            });
-        };
-
-        elements.form.addEventListener('submit', (e) => {
-          e.preventDefault();
-          watchedState.form.status = 'sending';
-          const formData = new FormData(elements.form);
-          const url = formData.get('url');
-          const schema = yup.object({
-            website: yup.string().url().notOneOf(watchedState.form.watchUrl),
-          });
-          schema.validate({ website: url })
-            .then(() => {
-              watchedState.form.valid = true;
-              watchedState.form.error = null;
-              getFeedAndPosts(url);
-              watchedState.form.watchUrl.push(url);
-            })
-            .catch((err) => {
-              watchedState.form.error = err.message.key;
-              watchedState.form.valid = false;
-              watchedState.form.status = 'failed';
-            });
-        // watch(elements, i18next, watchedState);
-        });
-      };
-      getNewPosts(watchedState);
+  elements.form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    watchedState.form.status = 'sending';
+    const formData = new FormData(elements.form);
+    const url = formData.get('url');
+    const schema = yup.object({
+      website: yup.string().url().notOneOf(watchedState.form.watchUrl),
     });
+    schema.validate({ website: url })
+      .then(() => {
+        watchedState.form.valid = true;
+        watchedState.form.error = null;
+        getFeedAndPosts(url);
+        watchedState.form.watchUrl.push(url);
+      })
+      .catch((err) => {
+        watchedState.form.error = err.message.key;
+        watchedState.form.valid = false;
+        watchedState.form.status = 'failed';
+      });
+    watch(elements, i18next, watchedState);
+  });
+
+  elements.posts.addEventListener('click', (e) => {
+    if (e.target.dataset.id) {
+      const { id } = e.target.dataset;
+      watchedState.contents.posts.forEach((post) => {
+        if (post.id === id) {
+          watchedState.modal = {
+            title: post.title,
+            description: post.description,
+            href: post.url,
+            id: post.id,
+          };
+          watchedState.ui.seenPosts.push(post.id);
+        }
+      });
+    }
+  });
 };
