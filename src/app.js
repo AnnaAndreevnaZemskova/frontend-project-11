@@ -97,10 +97,10 @@ export default () => {
         watchedState.status = 'loading';
 
         axios
-          .get(getUrl(data.url), { timeout: 5000 })
+          .get(makeUrl(data.url), { timeout: 5000 })
           .then((response) => {
             if (response.status === 200) {
-              const { feed, posts } = parse(response.data);
+              const { feed, posts } = parser(response.data);
               watchedState.contents.feeds.unshift(feed);
               watchedState.contents.posts.unshift(...posts);
               watchedState.loadedFeeds.push(data.url);
@@ -126,7 +126,7 @@ export default () => {
   elements.posts.addEventListener('click', (e) => {
     if (e.target.dataset.id) {
       const { id } = e.target.dataset;
-      initialState.contents.posts.forEach((post) => {
+      state.contents.posts.forEach((post) => {
         if (post.id === id) {
           watchedState.modal = {
             title: post.title,
