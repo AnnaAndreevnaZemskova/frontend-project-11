@@ -52,13 +52,12 @@ export default () => {
 
   const getNewPosts = () => {
     const titlesOfPosts = watchedState.contents.posts.map(({ title }) => title);
-    const arrayOfPromises = watchedState.loadedFeeds.map(([url, feedId]) => axios.get(makeUrl(url))
+    const arrayOfPromises = watchedState.loadedFeeds.map((url) => axios.get(makeUrl(url))
       .then((response) => {
         const { posts } = parser(response.data);
         const newPosts = posts.filter((post) => !titlesOfPosts.includes(post.title)).map((item) => {
-          post.id = uniqueId();
-          post.feedId = feed.id;
-          return { ...item, feedId };
+          const id = uniqueId();
+          return { ...item, id };
         });
         if (watchedState.loadedFeeds.length > 0) {
           watchedState.contents.posts = [...newPosts, ...watchedState.contents.posts];
@@ -84,31 +83,50 @@ export default () => {
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
-    watchedState.form.status = 'sending';
-    const formData = new FormData(elements.form);
-    const url = formData.get('url');
-    const schema = yup.object({
-      website: yup.string().url().notOneOf(watchedState.form.watchUrl),
+
+    const formData = new FormData(e.target);
+    const newRss = Object.fromEntries(formData);
+
+    const schema = yup.object().shape({
+      url: yup.string().required().url().notOneOf(watchedState.loadedFeeds),
     });
-    schema.validate({ website: url })
-      .then(() => {
-        watchedState.form.valid = true;
-        watchedState.form.error = null;
-        getFeedAndPosts(url);
-        watchedState.form.watchUrl.push(url);
+
+    schema
+      .validate(newRss, { abortEarly: false })
+      .then((data) => {
+        watchedState.status = 'loading';
+
+        axios
+          .get(getUrl(data.url), { timeout: 5000 })
+          .then((response) => {
+            if (response.status === 200) {
+              const { feed, posts } = parse(response.data);
+              watchedState.contents.feeds.unshift(feed);
+              watchedState.contents.posts.unshift(...posts);
+              watchedState.loadedFeeds.push(data.url);
+              watchedState.status = 'filling';
+            } else {
+              throw new Error('errors.urlIsNotRSS');
+            }
+          })
+          .catch((error) => {
+            const { message } = error;
+            watchedState.form.errors = message === 'timeout of 5000ms exceeded' ? 'errors.timeout' : message;
+            watchedState.status = 'filling';
+          });
       })
       .catch((err) => {
-        watchedState.form.error = err.message.key;
-        watchedState.form.valid = false;
-        watchedState.form.status = 'failed';
+        const { message } = err;
+        watchedState.form.errors = message;
+        watchedState.status = 'filling';
       });
-    watch(elements, i18next, watchedState);
+    console.log('watchedState: ', watchedState);
   });
 
   elements.posts.addEventListener('click', (e) => {
     if (e.target.dataset.id) {
       const { id } = e.target.dataset;
-      watchedState.contents.posts.forEach((post) => {
+      initialState.contents.posts.forEach((post) => {
         if (post.id === id) {
           watchedState.modal = {
             title: post.title,
