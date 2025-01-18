@@ -1,3 +1,5 @@
+/* eslint-disable no-param-reassign */
+
 import * as yup from 'yup';
 import i18next from 'i18next';
 import axios from 'axios';
@@ -39,39 +41,6 @@ export default () => {
     ulStateOpened: [],
   };
 
-  const i18n = i18next.createInstance();
-  const defaultLanguage = 'ru';
-  i18n.init({
-    lng: defaultLanguage,
-    debug: false,
-    resources,
-  });
-
-  const watchedState = watch(elements, i18n, state);
-  watchedState.lng = 'ru';
-
-  const getNewPosts = () => {
-    const titlesOfPosts = watchedState.contents.posts.map(({ title }) => title);
-    const arrayOfPromises = watchedState.loadedFeeds.map((url) => axios.get(makeUrl(url))
-      .then((response) => {
-        const { posts } = parser(response.data);
-        const newPosts = posts.filter((post) => !titlesOfPosts.includes(post.title)).map((item) => {
-          const id = uniqueId();
-          return { ...item, id };
-        });
-        if (watchedState.loadedFeeds.length > 0) {
-          watchedState.contents.posts = [...newPosts, ...watchedState.contents.posts];
-        }
-      }).catch((error) => {
-        console.log('error: ', error);
-      }));
-    Promise.all(arrayOfPromises).finally(() => {
-      setTimeout(() => getNewPosts(), 5000);
-    });
-  };
-
-  getNewPosts();
-
   yup.setLocale({
     string: {
       url: () => ({ key: 'invalid' }),
@@ -81,62 +50,86 @@ export default () => {
     },
   });
 
-  elements.form.addEventListener('submit', (e) => {
-    e.preventDefault();
+  const defaultLanguage = 'ru';
+  i18next.init({
+    lng: defaultLanguage,
+    debug: false,
+    resources,
+  })
+    .then(() => {
+      const watchedState = watch(elements, i18next, state);
+      watchedState.lng = 'ru';
 
-    const formData = new FormData(e.target);
-    const newRss = Object.fromEntries(formData);
+      const getNewPosts = (feeds) => {
+        feeds.forEach((feed) => {
+          axios.get(feed.url)
+            .then((response) => {
+              const [, posts] = parser(response.data.contents);
+              const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
+              const newPosts = posts.filter(filterPost);
 
-    const schema = yup.object().shape({
-      url: yup.string().required().url().notOneOf(watchedState.loadedFeeds),
-    });
+              newPosts.map((post) => {
+                post.id = uniqueId();
+                post.feedId = feed.id;
+                watchedState.posts.push(post);
+                feed.lastUpdate = post.timeOfPost;
+                return post;
+              });
+              watchedState.form.status = 'finished';
+              setTimeout(() => getNewPosts(watchedState.feeds), 5000);
+            })
+            .catch((err) => {
+              watchedState.form.status = 'failed';
+              watchedState.form.valid = false;
+              watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
+            });
+        });
+      };
 
-    schema
-      .validate(newRss, { abortEarly: false })
-      .then((data) => {
-        watchedState.status = 'loading';
-
-        axios
-          .get(makeUrl(data.url), { timeout: 5000 })
+      const getFeedAndPosts = (url) => {
+        axios.get(makeUrl(url))
           .then((response) => {
-            if (response.status === 200) {
-              const { feed, posts } = parser(response.data);
-              watchedState.contents.feeds.unshift(feed);
-              watchedState.contents.posts.unshift(...posts);
-              watchedState.loadedFeeds.push(data.url);
-              watchedState.status = 'filling';
-            } else {
-              throw new Error('errors.urlIsNotRSS');
-            }
+            const [feed, posts] = parser(response.data.contents);
+            feed.url = makeUrl(url);
+            feed.lastUpdate = posts[posts.length - 1].timeOfPost;
+            feed.id = uniqueId();
+            posts.forEach((post) => {
+              post.id = uniqueId();
+              post.feedId = feed.id;
+            });
+            watchedState.form.status = 'finished';
+            watchedState.feeds.push(feed);
+            watchedState.posts = posts;
+            getNewPosts(watchedState.feeds);
           })
-          .catch((error) => {
-            const { message } = error;
-            watchedState.form.errors = message === 'timeout of 5000ms exceeded' ? 'errors.timeout' : message;
-            watchedState.status = 'filling';
+          .catch((err) => {
+            watchedState.form.error = (err.isAxiosError) ? 'networkError' : err.message;
+            watchedState.form.valid = false;
+            watchedState.form.status = 'failed';
           });
-      })
-      .catch((err) => {
-        const { message } = err;
-        watchedState.form.errors = message;
-        watchedState.status = 'filling';
-      });
-    console.log('watchedState: ', watchedState);
-  });
+      };
 
-  elements.posts.addEventListener('click', (e) => {
-    if (e.target.dataset.id) {
-      const { id } = e.target.dataset;
-      state.contents.posts.forEach((post) => {
-        if (post.id === id) {
-          watchedState.modal = {
-            title: post.title,
-            description: post.description,
-            href: post.url,
-            id: post.id,
-          };
-          watchedState.ui.seenPosts.push(post.id);
-        }
+      elements.form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        watchedState.form.status = 'sending';
+        const formData = new FormData(elements.form);
+        const url = formData.get('url');
+        const schema = yup.object({
+          website: yup.string().url().notOneOf(watchedState.form.watchUrl),
+        });
+        schema.validate({ website: url })
+          .then(() => {
+            watchedState.form.valid = true;
+            watchedState.form.error = null;
+            getFeedAndPosts(url);
+            watchedState.form.watchUrl.push(url);
+          })
+          .catch((err) => {
+            watchedState.form.error = err.message.key;
+            watchedState.form.valid = false;
+            watchedState.form.status = 'failed';
+          });
+        watch(elements, i18next, watchedState);
       });
-    }
-  });
+    });
 };
