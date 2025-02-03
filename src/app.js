@@ -62,19 +62,19 @@ export default () => {
 
       const getNewPosts = () => {
         const promises = watchedState.feeds.map((feed) => axios.get(feed.url)
-            .then((response) => {
-              const [, posts] = parser(response.data.contents);
-              const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
-              const newPosts = posts.filter(filterPost);
+          .then((response) => {
+            const [, posts] = parser(response.data.contents);
+            const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
+            const newPosts = posts.filter(filterPost);
 
-              newPosts.map((post) => {
-                post.id = uniqueId();
-                post.feedId = feed.id;
-                watchedState.posts.push(post);
-                feed.lastUpdate = post.timeOfPost;
-                return post;
-              });
-            }));
+            newPosts.map((post) => {
+              post.id = uniqueId();
+              post.feedId = feed.id;
+              watchedState.posts.push(post);
+              feed.lastUpdate = post.timeOfPost;
+              return post;
+            });
+          }));
 
         Promise.all(promises)
           .finally(() => {
