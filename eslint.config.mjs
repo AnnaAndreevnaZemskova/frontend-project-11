@@ -34,7 +34,6 @@ export default [
       'import/no-named-as-default-member': 'off',
       'import/no-extraneous-dependencies': 'off',
       'no-undef': 'off',
-      'arrow-body-style': "off",
     },
   },
 ];

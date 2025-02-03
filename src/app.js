@@ -61,7 +61,7 @@ export default () => {
       watchedState.lng = 'ru';
 
       const getNewPosts = () => {
-        const promises = watchedState.feeds.map((feed) => axios.get(feed.url))
+        const promises = watchedState.feeds.map((feed) => axios.get(feed.url)
             .then((response) => {
               const [, posts] = parser(response.data.contents);
               const filterPost = (post) => post.timeOfPost > feed.lastUpdate;
@@ -74,8 +74,7 @@ export default () => {
                 feed.lastUpdate = post.timeOfPost;
                 return post;
               });
-            });
-        };
+            }));
 
         Promise.all(promises)
           .finally(() => {
@@ -88,7 +87,7 @@ export default () => {
             watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
             setTimeout(getNewPosts, 5000);
           });
-      });
+      };
 
       const getFeedAndPosts = (url) => {
         axios.get(makeUrl(url))
@@ -135,5 +134,5 @@ export default () => {
           });
         watch(elements, i18next, watchedState);
       });
+    });
 };
-
