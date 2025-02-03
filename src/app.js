@@ -62,8 +62,8 @@ export default () => {
 
       const fetchAndProcessPosts = () => {
         const promises = watchedState.feeds.map((feed) => {
-          feed.url = makeUrl(url);
-          return axios.get(feed.url)
+          //feed.url = makeUrl(url);
+          return axios.get(makeUrl(url))
             .then((response) => {
               const [, posts] = parser(response.data.contents);
               const newPosts = posts.filter((post) => post.timeOfPost > feed.lastUpdate);
@@ -99,7 +99,7 @@ export default () => {
               watchedState.form.error = (axios.isAxiosError(err)) ? 'networkError' : err.message;
             })
           .finally(() => {
-              setTimeout(fetchAndProcessPosts, 5000);
+            setTimeout(() => fetchAndProcessPosts(), 5000);
           });
       };
       fetchAndProcessPosts();
@@ -117,7 +117,7 @@ export default () => {
           .then(() => {
             watchedState.form.valid = true;
             watchedState.form.error = null;
-            getFeedAndPosts(url);
+            fetchAndProcessPosts(url);
             watchedState.form.watchUrl.push(url);
           })
           .catch((err) => {
